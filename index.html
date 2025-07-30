@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Awesome Word Game</title>
+    <title>Word Wizard - Advanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Custom styles for messages */
         .message-box {
             position: fixed;
             top: 50%;
@@ -20,14 +19,14 @@
             padding: 20px;
             border-radius: 10px;
             z-index: 1000;
-            display: none; /* Hidden by default */
+            display: none;
             text-align: center;
             font-size: 1.5rem;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .message-box button {
             margin-top: 15px;
-            background-color: #4CAF50; /* Green */
+            background-color: #4CAF50;
             border: none;
             color: white;
             padding: 10px 20px;
@@ -42,165 +41,277 @@
         .message-box button:hover {
             background-color: #45a049;
         }
+        .guess-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .guess-letter {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-r from-blue-500 to-purple-600 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg text-center">
         <h1 class="text-4xl font-extrabold text-gray-800 mb-6">
-            Welcome to Word Wizard!
+            Word Wizard - The Guessing Game!
         </h1>
 
         <p class="text-lg text-gray-600 mb-8">
-            Guess the word by typing letters.
+            Guess the secret word! You have 20 attempts.
         </p>
 
-        <div id="game-area" class="bg-gray-100 p-6 rounded-lg mb-8 border border-gray-200">
-            <p id="word-display" class="text-5xl font-mono tracking-widest text-gray-800 mb-4">_ _ _ _ _</p>
-            <p id="guessed-letters" class="text-lg text-gray-600">Guessed Letters: <span class="font-bold"></span></p>
-            <p id="attempts-left" class="text-xl text-red-500 font-semibold mt-2">Attempts Left: <span></span></p>
-            <p id="game-message" class="text-red-600 font-semibold mt-4"></p>
+        <div class="mb-6">
+            <label for="word-length-select" class="block text-gray-700 text-lg font-bold mb-2">Choose Word Length:</label>
+            <select id="word-length-select" class="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-lg">
+                <option value="4">4 Letters</option>
+                <option value="5" selected>5 Letters</option>
+                <option value="6">6 Letters</option>
+            </select>
         </div>
 
-        <button id="start-game-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
-            Start Game
+        <button id="start-game-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75 mb-6">
+            Start New Game
         </button>
+
+        <div id="game-area" class="bg-gray-100 p-6 rounded-lg mb-8 border border-gray-200 hidden">
+            <div id="guesses-container" class="mb-6">
+                </div>
+
+            <input type="text" id="word-input" class="w-full p-3 border-2 border-gray-300 rounded-md text-center text-2xl uppercase tracking-widest focus:outline-none focus:border-blue-500 mb-4" maxlength="5" placeholder="TYPE YOUR GUESS">
+            <button id="submit-guess-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                Guess Word
+            </button>
+
+            <p id="attempts-left" class="text-xl text-red-500 font-semibold mt-4">Attempts Left: <span class="font-bold">20</span></p>
+            <p id="game-message" class="text-red-600 font-semibold mt-4"></p>
+        </div>
     </div>
 
-    <!-- Message Box for game outcomes -->
     <div id="message-box" class="message-box">
         <p id="message-text"></p>
         <button id="message-box-button">Play Again</button>
     </div>
 
     <script>
-        // JavaScript code goes here
-        // Get references to HTML elements
-        const wordDisplay = document.getElementById('word-display');
-        const guessedLettersDisplay = document.querySelector('#guessed-letters span');
+        const wordLengthSelect = document.getElementById('word-length-select');
+        const startGameButton = document.getElementById('start-game-button');
+        const gameArea = document.getElementById('game-area');
+        const guessesContainer = document.getElementById('guesses-container');
+        const wordInput = document.getElementById('word-input');
+        const submitGuessButton = document.getElementById('submit-guess-button');
         const attemptsLeftDisplay = document.querySelector('#attempts-left span');
         const gameMessage = document.getElementById('game-message');
-        const startGameButton = document.getElementById('start-game-button');
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
         const messageBoxButton = document.getElementById('message-box-button');
 
-        // Game variables
-        const words = ['JAVASCRIPT', 'HTML', 'CSS', 'PROGRAMMING', 'DEVELOPER', 'CODING', 'COMPUTER', 'ALGORITHM'];
         let currentWord = '';
-        let guessedLetters = [];
-        let displayWord = [];
-        let attemptsLeft = 0;
-        const maxAttempts = 7; // Number of incorrect guesses allowed
-        let gameActive = false; // Game is not active until the button is clicked
+        let currentWordLength = 5; // Default word length
+        let attemptsLeft = 20;
+        const maxAttempts = 20;
+        let gameActive = false;
 
-        // --- Debugging logs ---
-        console.log('Script loaded.');
-        console.log('startGameButton element:', startGameButton);
-        if (startGameButton) {
-            console.log('Start Game Button found. Attaching event listener...');
-            startGameButton.addEventListener('click', initializeGame);
-        } else {
-            console.error('Start Game Button not found! Check HTML ID.');
-        }
-        // --- End debugging logs ---
+        // Word lists categorized by length
+        const words = {
+            4: ['CODE', 'DARK', 'FOUR', 'GAME', 'HOPE', 'LUCK', 'MIND', 'WORD', 'PLAY', 'STAR'],
+            5: ['APPLE', 'BRAIN', 'CLOUD', 'DREAM', 'EARTH', 'FLAME', 'GRAPE', 'HOUSE', 'IDEAL', 'JOLLY', 'KNIFE', 'LIGHT', 'MONEY', 'NIGHT', 'OCEAN', 'PLANT', 'QUEST', 'RIVER', 'SPACE', 'TABLE', 'UNITY', 'VISTA', 'WHITE', 'XENON', 'YACHT', 'ZEBRA'],
+            6: ['BANNER', 'CAMERA', 'DELETE', 'EDITOR', 'FATHER', 'GARDEN', 'HANDLE', 'INVITE', 'JUNGLE', 'KEYPAD', 'LITTLE', 'MASTER', 'NATURE', 'ORANGE', 'PERSON', 'QUICKLY', 'RATING', 'SCREEN', 'TRAVEL', 'UNIQUE', 'VISION', 'WINDOW', 'YELLOW', 'ZODIAC']
+        };
+
+        // --- Event Listeners ---
+        startGameButton.addEventListener('click', initializeGame);
+        submitGuessButton.addEventListener('click', handleGuess);
+        wordInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                handleGuess();
+            }
+        });
+        messageBoxButton.addEventListener('click', initializeGame);
+        wordLengthSelect.addEventListener('change', (event) => {
+            currentWordLength = parseInt(event.target.value);
+            wordInput.maxLength = currentWordLength; // Update input max length
+            // Optionally, if a game is active, prompt to restart or just reset
+            if (gameActive) {
+                gameMessage.textContent = `Word length changed to ${currentWordLength}. Click "Start New Game" to begin.`;
+                gameActive = false; // Invalidate current game
+                gameArea.classList.add('hidden');
+                startGameButton.textContent = 'Start New Game';
+            }
+        });
+
+        // --- Game Functions ---
 
         /**
-         * Initializes a new game.
-         * Resets game state, picks a new word, and updates the display.
+         * Initializes a new game, resetting all game state.
          */
         function initializeGame() {
-            console.log('initializeGame called!');
-            // Reset game state
-            currentWord = words[Math.floor(Math.random() * words.length)];
-            guessedLetters = [];
-            displayWord = Array(currentWord.length).fill('_'); // Fill with underscores
+            currentWordLength = parseInt(wordLengthSelect.value);
+            const availableWords = words[currentWordLength];
+            if (!availableWords || availableWords.length === 0) {
+                gameMessage.textContent = `No words available for length ${currentWordLength}. Please select another.`;
+                return;
+            }
+            currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
             attemptsLeft = maxAttempts;
-            gameActive = true; // Set game to active
+            gameActive = true;
 
-            // Clear previous messages
+            gameArea.classList.remove('hidden');
+            guessesContainer.innerHTML = ''; // Clear previous guesses
+            wordInput.value = '';
+            wordInput.maxLength = currentWordLength; // Ensure input max length matches
             gameMessage.textContent = '';
-            messageBox.style.display = 'none'; // Hide the message box
-
-            // Update display
-            updateDisplay();
-
-            // Enable keyboard input
-            // Ensure we only add the listener once to avoid multiple listeners
-            document.removeEventListener('keydown', handleKeyPress); // Remove any existing listener first
-            document.addEventListener('keydown', handleKeyPress);
+            messageBox.style.display = 'none'; // Hide game outcome message
             startGameButton.textContent = 'Restart Game'; // Change button text
+
+            updateDisplay();
+            wordInput.focus(); // Focus on the input field for immediate typing
         }
 
         /**
-         * Updates the word display, guessed letters, and attempts left.
+         * Updates the display for attempts left.
          */
         function updateDisplay() {
-            wordDisplay.textContent = displayWord.join(' '); // Join with spaces for readability
-            guessedLettersDisplay.textContent = guessedLetters.join(', ');
             attemptsLeftDisplay.textContent = attemptsLeft;
         }
 
         /**
-         * Handles keyboard key presses for guessing letters.
-         * @param {KeyboardEvent} event - The keyboard event object.
+         * Handles the player's word guess.
          */
-        function handleKeyPress(event) {
+        function handleGuess() {
             if (!gameActive) {
-                console.log('Game not active, ignoring key press.');
-                return; // Ignore input if game is not active
+                gameMessage.textContent = 'Please start a new game first!';
+                return;
             }
 
-            const key = event.key.toUpperCase(); // Get the pressed key and convert to uppercase
+            const guess = wordInput.value.toUpperCase().trim();
+            wordInput.value = ''; // Clear input after guess
 
-            // Check if the key is a single letter (A-Z)
-            if (key.length === 1 && key >= 'A' && key <= 'Z') {
-                if (guessedLetters.includes(key)) {
-                    gameMessage.textContent = `You already guessed "${key}". Try another letter!`;
-                } else {
-                    guessedLetters.push(key); // Add to guessed letters
-                    gameMessage.textContent = ''; // Clear previous message
-                    checkGuess(key);
-                }
-            } else {
-                gameMessage.textContent = 'Please guess a letter (A-Z).';
-            }
-        }
-
-        /**
-         * Checks if the guessed letter is in the current word and updates the game state.
-         * @param {string} letter - The letter guessed by the player.
-         */
-        function checkGuess(letter) {
-            let found = false;
-            for (let i = 0; i < currentWord.length; i++) {
-                if (currentWord[i] === letter) {
-                    displayWord[i] = letter; // Reveal the letter in the display word
-                    found = true;
-                }
+            if (guess.length !== currentWordLength) {
+                gameMessage.textContent = `Your guess must be ${currentWordLength} letters long.`;
+                return;
             }
 
-            if (!found) {
-                attemptsLeft--; // Decrement attempts if letter not found
+            // Basic validation: ensure guess is alphabetic. For a real game, you'd check against a dictionary.
+            if (!/^[A-Z]+$/.test(guess)) {
+                gameMessage.textContent = 'Please enter only letters (A-Z).';
+                return;
             }
 
+            attemptsLeft--;
+            processGuess(guess);
             updateDisplay();
             checkGameStatus();
         }
 
         /**
+         * Processes the guessed word, calculates feedback, and displays it.
+         * @param {string} guess - The word guessed by the player.
+         */
+        function processGuess(guess) {
+            let correctLetters = 0; // Correct letters, any position
+            let correctPosition = 0; // Correct letters, correct position
+
+            const targetLetters = currentWord.split('');
+            const guessLetters = guess.split('');
+
+            // To handle duplicate letters in the target word accurately for 'correctLetters' count
+            const targetLetterCounts = {};
+            for (const char of targetLetters) {
+                targetLetterCounts[char] = (targetLetterCounts[char] || 0) + 1;
+            }
+
+            // First pass: check for correct position (green check)
+            for (let i = 0; i < currentWordLength; i++) {
+                if (guessLetters[i] === targetLetters[i]) {
+                    correctPosition++;
+                    targetLetterCounts[guessLetters[i]]--; // Mark as used
+                }
+            }
+
+            // Second pass: check for correct letters (yellow circle) for remaining letters
+            for (let i = 0; i < currentWordLength; i++) {
+                // If this letter wasn't a correct position match, check if it exists elsewhere
+                if (guessLetters[i] !== targetLetters[i] && targetLetterCounts[guessLetters[i]] > 0) {
+                    correctLetters++;
+                    targetLetterCounts[guessLetters[i]]--; // Mark as used
+                }
+            }
+
+            displayGuessFeedback(guess, correctLetters, correctPosition);
+        }
+
+
+        /**
+         * Displays the guessed word and its feedback (correct letters, correct position).
+         * @param {string} guess - The word guessed.
+         * @param {number} correctLetters - Count of correct letters (any position).
+         * @param {number} correctPosition - Count of correct letters in correct position.
+         */
+        function displayGuessFeedback(guess, correctLetters, correctPosition) {
+            const guessRowDiv = document.createElement('div');
+            guessRowDiv.classList.add('guess-row');
+
+            // Display the guessed word itself
+            const wordSpan = document.createElement('span');
+            wordSpan.textContent = guess;
+            wordSpan.classList.add('font-mono', 'text-2xl', 'uppercase', 'mr-4', 'text-gray-800');
+            guessRowDiv.appendChild(wordSpan);
+
+            // Display correct position feedback (e.g., green squares/checks)
+            for (let i = 0; i < currentWordLength; i++) {
+                const letterBox = document.createElement('div');
+                letterBox.classList.add('guess-letter', 'bg-gray-200', 'text-gray-700');
+                // You could dynamically color these based on actual letter correctness for a visual Wordle feel
+                // But for "not indicating which letter is correct", we'll just show the feedback counts.
+                // If you want a visual representation like Wordle (green for correct pos, yellow for correct letter),
+                // we'd need to adjust processGuess to return per-letter status.
+                // For now, these boxes are just placeholders if we choose to make them visual later.
+                guessRowDiv.appendChild(letterBox);
+            }
+
+            const feedbackSpan = document.createElement('span');
+            feedbackSpan.classList.add('ml-4', 'text-lg', 'text-gray-700');
+            feedbackSpan.innerHTML = `✅ ${correctPosition} (Pos) | 🟡 ${correctLetters} (Letter)`;
+            guessRowDiv.appendChild(feedbackSpan);
+
+            guessesContainer.prepend(guessRowDiv); // Add to the top
+        }
+
+
+        /**
          * Checks if the game has ended (win or loss).
          */
         function checkGameStatus() {
-            if (displayWord.join('') === currentWord) {
-                // Player wins!
+            const lastGuessRow = guessesContainer.firstChild; // Get the most recent guess feedback
+            let isWin = false;
+
+            if (lastGuessRow) {
+                const feedbackText = lastGuessRow.querySelector('span:last-child').textContent;
+                // Parse the feedback to check for a win condition (e.g., 5 correct in correct position for a 5-letter word)
+                const matchCorrectPosition = feedbackText.match(/✅ (\d+)/);
+                if (matchCorrectPosition && parseInt(matchCorrectPosition[1]) === currentWordLength) {
+                    isWin = true;
+                }
+            }
+
+
+            if (isWin) {
                 gameActive = false;
                 showMessage('Congratulations! You guessed the word: ' + currentWord, 'win');
-                document.removeEventListener('keydown', handleKeyPress); // Disable further input
             } else if (attemptsLeft <= 0) {
-                // Player loses!
                 gameActive = false;
                 showMessage('Game Over! The word was: ' + currentWord, 'lose');
-                document.removeEventListener('keydown', handleKeyPress); // Disable further input
             }
         }
 
@@ -211,7 +322,7 @@
          */
         function showMessage(message, type) {
             messageText.textContent = message;
-            messageBox.style.display = 'block'; // Show the message box
+            messageBox.style.display = 'block';
             if (type === 'win') {
                 messageBox.style.backgroundColor = 'rgba(76, 175, 80, 0.9)'; // Green for win
             } else {
@@ -219,14 +330,9 @@
             }
         }
 
-        // Event Listeners
-        // The start game button listener is now inside the script and logged for debugging.
-        messageBoxButton.addEventListener('click', initializeGame); // Play again button
-
         // Initial setup when the page loads
-        // Set initial display for attempts and an empty word.
-        attemptsLeftDisplay.textContent = maxAttempts;
-        wordDisplay.textContent = Array(words[0].length).fill('_').join(' '); // Show underscores for a word length example
+        updateDisplay();
+        wordInput.maxLength = currentWordLength; // Set initial max length based on default select
     </script>
 </body>
 </html>
