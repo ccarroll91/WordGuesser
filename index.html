@@ -1,84 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- The <head> section contains meta-information about the HTML document. -->
-    <!-- It's not displayed on the page but is crucial for browser behavior, SEO, etc. -->
-
     <meta charset="UTF-8">
-    <!-- Specifies the character encoding for the document, ensuring proper display of characters. -->
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- This meta tag is CRUCIAL for responsive web design. It tells the browser to set the width of the viewport to the device's width and set the initial zoom level. -->
-
     <title>My Awesome Word Game</title>
-    <!-- The title that appears in the browser tab or window title bar. -->
-
-    <!-- Link to Tailwind CSS CDN for easy styling. Tailwind provides utility classes to style elements directly in HTML. -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles can go here if needed, but Tailwind is preferred for utility classes. */
         body {
-            font-family: 'Inter', sans-serif; /* Using Inter font as per instructions, with a sans-serif fallback. */
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for messages */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            text-align: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .message-box button {
+            margin-top: 15px;
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .message-box button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body class="bg-gradient-to-r from-blue-500 to-purple-600 min-h-screen flex items-center justify-center p-4">
-    <!-- The <body> section contains all the content that will be displayed on the web page. -->
-    <!-- Tailwind classes are used here for basic styling: -->
-    <!-- bg-gradient-to-r from-blue-500 to-purple-600: Sets a background gradient. -->
-    <!-- min-h-screen: Ensures the body takes at least the full height of the viewport. -->
-    <!-- flex items-center justify-center: Centers the content both horizontally and vertically. -->
-    <!-- p-4: Adds padding around the content. -->
-
     <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md text-center">
-        <!-- This div acts as a container for your game content. -->
-        <!-- bg-white: White background. -->
-        <!-- p-8: Padding inside the container. -->
-        <!-- rounded-xl: Large rounded corners for a modern look. -->
-        <!-- shadow-2xl: A prominent shadow for depth. -->
-        <!-- w-full max-w-md: Makes the container responsive, taking full width on small screens and maxing out at 'md' (medium) width on larger screens. -->
-        <!-- text-center: Centers the text within this container. -->
-
         <h1 class="text-4xl font-extrabold text-gray-800 mb-6">
-            <!-- h1: Main heading for the game. -->
-            <!-- text-4xl: Large text size. -->
-            <!-- font-extrabold: Extra bold font weight. -->
-            <!-- text-gray-800: Dark gray text color. -->
-            <!-- mb-6: Margin-bottom for spacing. -->
             Welcome to Word Wizard!
         </h1>
 
         <p class="text-lg text-gray-600 mb-8">
-            <!-- p: A paragraph for a brief description or instructions. -->
-            <!-- text-lg: Large text size. -->
-            <!-- text-gray-600: Medium gray text color. -->
-            <!-- mb-8: Margin-bottom for spacing. -->
-            Get ready to test your vocabulary!
+            Guess the word by typing letters.
         </p>
 
         <div id="game-area" class="bg-gray-100 p-6 rounded-lg mb-8 border border-gray-200">
-            <!-- This div will be where your actual game elements (like letter tiles, input fields, etc.) will be dynamically added by JavaScript. -->
-            <!-- bg-gray-100: Light gray background. -->
-            <!-- p-6: Padding. -->
-            <!-- rounded-lg: Rounded corners. -->
-            <!-- mb-8: Margin-bottom. -->
-            <!-- border border-gray-200: A subtle border. -->
-            <p class="text-gray-500 italic">Your game will appear here!</p>
+            <p id="word-display" class="text-5xl font-mono tracking-widest text-gray-800 mb-4"></p>
+            <p id="guessed-letters" class="text-lg text-gray-600">Guessed Letters: <span class="font-bold"></span></p>
+            <p id="attempts-left" class="text-xl text-red-500 font-semibold mt-2">Attempts Left: <span></span></p>
+            <p id="game-message" class="text-red-600 font-semibold mt-4"></p>
         </div>
 
-        <button class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
-            <!-- button: A simple button, perhaps to start the game or get a new word. -->
-            <!-- bg-green-500: Green background. -->
-            <!-- hover:bg-green-600: Darker green on hover. -->
-            <!-- text-white: White text. -->
-            <!-- font-bold: Bold font. -->
-            <!-- py-3 px-6: Vertical and horizontal padding. -->
-            <!-- rounded-full: Fully rounded corners for a pill shape. -->
-            <!-- transition duration-300 ease-in-out: Smooth transition for hover effects. -->
-            <!-- transform hover:scale-105: Slightly scales up on hover. -->
-            <!-- focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75: Accessibility and visual feedback on focus. -->
+        <button id="start-game-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
             Start Game
         </button>
     </div>
+
+    <!-- Message Box for game outcomes -->
+    <div id="message-box" class="message-box">
+        <p id="message-text"></p>
+        <button id="message-box-button">Play Again</button>
+    </div>
+
+    <script>
+        // JavaScript code goes here
+        // Get references to HTML elements
+        const wordDisplay = document.getElementById('word-display');
+        const guessedLettersDisplay = document.querySelector('#guessed-letters span');
+        const attemptsLeftDisplay = document.querySelector('#attempts-left span');
+        const gameMessage = document.getElementById('game-message');
+        const startGameButton = document.getElementById('start-game-button');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageBoxButton = document.getElementById('message-box-button');
+
+        // Game variables
+        const words = ['JAVASCRIPT', 'HTML', 'CSS', 'PROGRAMMING', 'DEVELOPER', 'CODING', 'COMPUTER', 'ALGORITHM'];
+        let currentWord = '';
+        let guessedLetters = [];
+        let displayWord = [];
+        let attemptsLeft = 0;
+        const maxAttempts = 7; // Number of incorrect guesses allowed
+        let gameActive = false;
+
+        /**
+         * Initializes a new game.
+         * Resets game state, picks a new word, and updates the display.
+         */
+        function initializeGame() {
+            // Reset game state
+            currentWord = words[Math.floor(Math.random() * words.length)];
+            guessedLetters = [];
+            displayWord = Array(currentWord.length).fill('_'); // Fill with underscores
+            attemptsLeft = maxAttempts;
+            gameActive = true;
+
+            // Clear previous messages
+            gameMessage.textContent = '';
+            messageBox.style.display = 'none';
+
+            // Update display
+            updateDisplay();
+
+            // Enable keyboard input
+            document.addEventListener('keydown', handleKeyPress);
+            startGameButton.textContent = 'Restart Game'; // Change button text
+        }
+
+        /**
+         * Updates the word display, guessed letters, and attempts left.
+         */
+        function updateDisplay() {
+            wordDisplay.textContent = displayWord.join(' '); // Join with spaces for readability
+            guessedLettersDisplay.textContent = guessedLetters.join(', ');
+            attemptsLeftDisplay.textContent = attemptsLeft;
+        }
+
+        /**
+         * Handles keyboard key presses for guessing letters.
+         * @param {KeyboardEvent} event - The keyboard event object.
+         */
+        function handleKeyPress(event) {
+            if (!gameActive) return; // Ignore input if game is not active
+
+            const key = event.key.toUpperCase(); // Get the pressed key and convert to uppercase
+
+            // Check if the key is a single letter (A-Z)
+            if (key.length === 1 && key >= 'A' && key <= 'Z') {
+                if (guessedLetters.includes(key)) {
+                    gameMessage.textContent = `You already guessed "${key}". Try another letter!`;
+                } else {
+                    guessedLetters.push(key); // Add to guessed letters
+                    gameMessage.textContent = ''; // Clear previous message
+                    checkGuess(key);
+                }
+            } else {
+                gameMessage.textContent = 'Please guess a letter (A-Z).';
+            }
+        }
+
+        /**
+         * Checks if the guessed letter is in the current word and updates the game state.
+         * @param {string} letter - The letter guessed by the player.
+         */
+        function checkGuess(letter) {
+            let found = false;
+            for (let i = 0; i < currentWord.length; i++) {
+                if (currentWord[i] === letter) {
+                    displayWord[i] = letter; // Reveal the letter in the display word
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                attemptsLeft--; // Decrement attempts if letter not found
+            }
+
+            updateDisplay();
+            checkGameStatus();
+        }
+
+        /**
+         * Checks if the game has ended (win or loss).
+         */
+        function checkGameStatus() {
+            if (displayWord.join('') === currentWord) {
+                // Player wins!
+                gameActive = false;
+                showMessage('Congratulations! You guessed the word: ' + currentWord, 'win');
+                document.removeEventListener('keydown', handleKeyPress); // Disable further input
+            } else if (attemptsLeft <= 0) {
+                // Player loses!
+                gameActive = false;
+                showMessage('Game Over! The word was: ' + currentWord, 'lose');
+                document.removeEventListener('keydown', handleKeyPress); // Disable further input
+            }
+        }
+
+        /**
+         * Displays a modal message box with game outcome.
+         * @param {string} message - The message to display.
+         * @param {string} type - Type of message ('win' or 'lose').
+         */
+        function showMessage(message, type) {
+            messageText.textContent = message;
+            messageBox.style.display = 'block'; // Show the message box
+            if (type === 'win') {
+                messageBox.style.backgroundColor = 'rgba(76, 175, 80, 0.9)'; // Green for win
+            } else {
+                messageBox.style.backgroundColor = 'rgba(244, 67, 54, 0.9)'; // Red for lose
+            }
+        }
+
+        // Event Listeners
+        startGameButton.addEventListener('click', initializeGame);
+        messageBoxButton.addEventListener('click', initializeGame); // Play again button
+
+        // Initial setup when the page loads
+        // You might want to display a welcome message or instructions before the game starts.
+        // For now, let's just update the display to show initial state.
+        updateDisplay();
+    </script>
 </body>
 </html>
