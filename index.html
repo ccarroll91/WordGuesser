@@ -55,7 +55,7 @@
         </p>
 
         <div id="game-area" class="bg-gray-100 p-6 rounded-lg mb-8 border border-gray-200">
-            <p id="word-display" class="text-5xl font-mono tracking-widest text-gray-800 mb-4"></p>
+            <p id="word-display" class="text-5xl font-mono tracking-widest text-gray-800 mb-4">_ _ _ _ _</p>
             <p id="guessed-letters" class="text-lg text-gray-600">Guessed Letters: <span class="font-bold"></span></p>
             <p id="attempts-left" class="text-xl text-red-500 font-semibold mt-2">Attempts Left: <span></span></p>
             <p id="game-message" class="text-red-600 font-semibold mt-4"></p>
@@ -91,28 +91,42 @@
         let displayWord = [];
         let attemptsLeft = 0;
         const maxAttempts = 7; // Number of incorrect guesses allowed
-        let gameActive = false;
+        let gameActive = false; // Game is not active until the button is clicked
+
+        // --- Debugging logs ---
+        console.log('Script loaded.');
+        console.log('startGameButton element:', startGameButton);
+        if (startGameButton) {
+            console.log('Start Game Button found. Attaching event listener...');
+            startGameButton.addEventListener('click', initializeGame);
+        } else {
+            console.error('Start Game Button not found! Check HTML ID.');
+        }
+        // --- End debugging logs ---
 
         /**
          * Initializes a new game.
          * Resets game state, picks a new word, and updates the display.
          */
         function initializeGame() {
+            console.log('initializeGame called!');
             // Reset game state
             currentWord = words[Math.floor(Math.random() * words.length)];
             guessedLetters = [];
             displayWord = Array(currentWord.length).fill('_'); // Fill with underscores
             attemptsLeft = maxAttempts;
-            gameActive = true;
+            gameActive = true; // Set game to active
 
             // Clear previous messages
             gameMessage.textContent = '';
-            messageBox.style.display = 'none';
+            messageBox.style.display = 'none'; // Hide the message box
 
             // Update display
             updateDisplay();
 
             // Enable keyboard input
+            // Ensure we only add the listener once to avoid multiple listeners
+            document.removeEventListener('keydown', handleKeyPress); // Remove any existing listener first
             document.addEventListener('keydown', handleKeyPress);
             startGameButton.textContent = 'Restart Game'; // Change button text
         }
@@ -131,7 +145,10 @@
          * @param {KeyboardEvent} event - The keyboard event object.
          */
         function handleKeyPress(event) {
-            if (!gameActive) return; // Ignore input if game is not active
+            if (!gameActive) {
+                console.log('Game not active, ignoring key press.');
+                return; // Ignore input if game is not active
+            }
 
             const key = event.key.toUpperCase(); // Get the pressed key and convert to uppercase
 
@@ -203,13 +220,13 @@
         }
 
         // Event Listeners
-        startGameButton.addEventListener('click', initializeGame);
+        // The start game button listener is now inside the script and logged for debugging.
         messageBoxButton.addEventListener('click', initializeGame); // Play again button
 
         // Initial setup when the page loads
-        // You might want to display a welcome message or instructions before the game starts.
-        // For now, let's just update the display to show initial state.
-        updateDisplay();
+        // Set initial display for attempts and an empty word.
+        attemptsLeftDisplay.textContent = maxAttempts;
+        wordDisplay.textContent = Array(words[0].length).fill('_').join(' '); // Show underscores for a word length example
     </script>
 </body>
 </html>
